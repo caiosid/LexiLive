@@ -1,4 +1,3 @@
-import React from "react";
 import { Text, View, Image, TouchableOpacity } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { styles } from "./styles";
@@ -10,27 +9,34 @@ export default function Welcome() {
     navigation.navigate("Login");
   }
 
+  function chooseLanguage() {
+    navigation.navigate("ChooseLanguage");
+  }
+
   return (
     <View style={styles.container}>
+      
       <Image
-        source={require("../../assets/camera-drone.png")}
+        source={require("../../assets/language.png")}
         style={styles.logo}
       />
 
       <Text style={styles.title}>Bem-vindo ao LexiLive</Text>
-      <Text style={styles.subtitle}>
-        Desenvolvido para transformar qualquer câmera de segurança em um sistema
-        de detecção proativo, o LexiLive permite que você defina áreas de
-        monitoramento personalizadas as "bordas".
+      <Text style={styles.subtitle}>Aprenda vocabulário com a vida Real!</Text>
+      <Text style={styles.paragraph}>
+        O LexiLive oferece uma maneira intuitiva de construir um vocabulário sólido. Ao
+        permitir que os usuários escolham entre diversos idiomas, como inglês,
+        francês, italiano e espanhol, o LexiLive busca tornar o processo de
+        aprendizado mais dinâmico e alinhado com as necessidades do dia a dia
       </Text>
 
-      <TouchableOpacity style={styles.button}>
+      <TouchableOpacity style={styles.button} onPress={chooseLanguage}>
         <Text style={styles.buttonText}>Começar</Text>
       </TouchableOpacity>
 
       <View style={styles.bottomContainer}>
         <TouchableOpacity onPress={openScreen}>
-          <Text style={styles.bottomText}>Já tem uma conta?</Text>
+          <Text style={styles.bottomText}>você já tem uma conta?</Text>
         </TouchableOpacity>
       </View>
     </View>
