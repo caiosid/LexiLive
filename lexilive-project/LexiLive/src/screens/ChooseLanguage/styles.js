@@ -8,6 +8,12 @@ export const styles = StyleSheet.create({
     padding: 20,
     justifyContent: "center",
   },
+  logo: {
+    width: 100,
+    height: 100,
+    marginBottom: 10,
+    alignSelf: "center"
+  },
   title: {
     fontSize: 30,
     fontWeight: "bold",
@@ -20,6 +26,7 @@ export const styles = StyleSheet.create({
     textAlign: "center",
     color: colors.textSecondary,
     marginBottom: 20,
+    fontWeight: 'bold'
   },
   titleLanguage: {
     textAlign: "center",
@@ -41,7 +48,8 @@ export const styles = StyleSheet.create({
   languageText: {
     flex: 1,
     fontSize: 18,
-    fontWeight: "500",
+    fontWeight: 'bold',
+    color: colors.textSecondary
   },
   button: {
     width: "50%",
