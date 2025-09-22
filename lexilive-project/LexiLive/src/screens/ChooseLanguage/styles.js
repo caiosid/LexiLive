@@ -4,26 +4,59 @@ import { colors } from "../../styles/colors";
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     padding: 20,
-    justifyContent: 'center',
-    alignItems: 'center'
+    justifyContent: "center",
   },
-  title:{
-    fontSize: 28,
-    width: "100%",
-    textAlign: "center",
+  title: {
+    fontSize: 30,
     fontWeight: "bold",
     color: colors.primary,
     marginBottom: 5,
-  },
-  subtitle:{
-    fontSize: 18,
-    width: "100%",
     textAlign: "center",
-    fontWeight: "bold",
-    color: colors.primary,
+  },
+  subTitle: {
+    fontSize: 20,
+    textAlign: "center",
+    color: colors.textSecondary,
     marginBottom: 20,
-  }
+  },
+  titleLanguage: {
+    textAlign: "center",
+  },
+  flagImage: {
+    width: 35,
+    height: 35,
+    marginRight: 15,
+  },
+  languageButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: 15,
+    padding: 15,
+    marginVertical: 5,
+    borderWidth: 1,
+    borderColor: "lightgreen",
+  },
+  languageText: {
+    flex: 1,
+    fontSize: 18,
+    fontWeight: "500",
+  },
+  button: {
+    width: "50%",
+    paddingVertical: 15,
+    marginTop: 35,
+    padding: 10,
+    alignItems: "center",
+    backgroundColor: colors.primary,
+    borderRadius: 50,
+    alignSelf: "center",
+  },
+  titleButton: {
+    textAlign: "center",
+    fontSize: 18,
+    fontWeight: "bold",
+    color: colors.background,
+  },
 });
-
