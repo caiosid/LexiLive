@@ -1,6 +1,7 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Login from "../screens/Login/Login";
 import Welcome from "../screens/Welcome/Welcome";
+import ChooseLanguage from "../screens/ChooseLanguage/ChooseLanguage";
 import ForgotPassword from "../screens/ForgotPassword/ForgotPassword";
 const { Screen, Navigator } = createNativeStackNavigator();
 
@@ -24,6 +25,15 @@ export function StackRoutes() {
           headerShown: false,
         }}
         component={Login}
+      />
+      <Screen
+        name="ChooseLanguage"
+        options={{
+          title: "ChooseLanguage",
+          headerTitleAlign: "center",
+          headerShown: false,
+        }}
+        component={ChooseLanguage}
       />
       <Screen
         name="ForgotPassword"
