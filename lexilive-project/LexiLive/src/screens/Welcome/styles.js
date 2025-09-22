@@ -6,34 +6,43 @@ export const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: colors.background,
-    padding: 50,
+    padding: 20,
   },
   logo: {
-    width: 150,
-    height: 150,
-    marginBottom: 20,
+    width: 100,
+    height: 100,
+    marginBottom: 10,
   },
   title: {
-    fontSize: 32,
-    textAlign: 'center',
-    justifyContent: "center",
-    alignItems: "center",
-    width: '100%',
+    fontSize: 30,
+    textAlign: "center",
+    width: "100%",
     fontWeight: "bold",
-    color: colors.primary, // Roxo
+    color: colors.primary, 
     marginBottom: 5,
   },
   subtitle: {
     width: "100%",
-    fontSize: 18,
-    color: "#888",
-    textAlign: "center", // Este é o estilo que garante que o texto quebre a linha corretamente.
+    fontSize: 20,
+    color: colors.textSecondary,
+    fontWeight: 'bold',
+    textAlign: "center",
     marginBottom: 5,
   },
+  paragraph: {
+    width: "100%",
+    fontSize: 20,
+    color: colors.textSecondary,
+    color: "#888",
+    textAlign: "center",
+    marginTop: 5,
+    marginBottom: 10,
+    lineHeight: 24,
+
+  },
   button: {
-    width: "80%",
-    backgroundColor: colors.primary, // Roxo
+    width: "50%",
+    backgroundColor: colors.primary,
     paddingVertical: 15,
     borderRadius: 50,
     alignItems: "center",
@@ -46,7 +55,7 @@ export const styles = StyleSheet.create({
   },
   bottomContainer: {
     position: "absolute",
-    bottom: 40,
+    bottom: 180,
     alignItems: "center",
   },
   bottomText: {
@@ -56,7 +65,7 @@ export const styles = StyleSheet.create({
   },
   linkText: {
     fontSize: 18,
-    color: colors.primary, // Roxo
+    color: colors.primary,
     fontWeight: "bold",
   },
 });
