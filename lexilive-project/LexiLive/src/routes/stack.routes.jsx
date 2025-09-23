@@ -3,6 +3,7 @@ import Login from "../screens/Login/Login";
 import Welcome from "../screens/Welcome/Welcome";
 import ChooseLanguage from "../screens/ChooseLanguage/ChooseLanguage";
 import ForgotPassword from "../screens/ForgotPassword/ForgotPassword";
+import Register from "../screens/Register/Register";
 const { Screen, Navigator } = createNativeStackNavigator();
 
 export function StackRoutes() {
@@ -43,6 +44,15 @@ export function StackRoutes() {
           headerShown: false,
         }}
         component={ForgotPassword}
+      />
+        <Screen
+        name="Register"
+        options={{
+          title: "Register",
+          headerTitleAlign: "center",
+          headerShown: false,
+        }}
+        component={Register}
       />
     </Navigator>
   );
