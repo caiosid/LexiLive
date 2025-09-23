@@ -1,6 +1,14 @@
 import React from "react";
 import { styles } from "./styles";
-import { View, Text, Image, TextInput, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  Image,
+  TextInput,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+} from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
 export default function ForgotPassword() {
@@ -11,7 +19,10 @@ export default function ForgotPassword() {
   }
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
       <Image
         source={require("../../assets/codigo-de-senha.png")}
         style={styles.logo}
@@ -35,6 +46,6 @@ export default function ForgotPassword() {
           <Text style={styles.dividerText}>Voltar</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
