@@ -3,10 +3,6 @@ import { colors } from "../../styles/colors";
 
 export const styles = StyleSheet.create({
   container: {
-    /*flex: 1,
-    alignItems: "center",
-    backgroundColor: colors.background,
-    padding: 20,*/
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
@@ -28,7 +24,7 @@ export const styles = StyleSheet.create({
     marginBottom: 5,
   },
   subtitle: {
-    fontSize: 20,
+    fontSize: 25,
     color: colors.primary,
     marginBottom: 20,
   },
@@ -37,20 +33,22 @@ export const styles = StyleSheet.create({
     height: 50,
     borderWidth: 1,
     borderColor: colors.inputBorder,
-    borderRadius: 10,
+    borderRadius: 20,
+    fontSize: 18,
     paddingHorizontal: 15,
     marginVertical: 10,
   },
   forgotPasswordContainer: {
     width: "100%",
-    alignItems: "flex-end",
   },
   forgotPasswordText: {
-    fontSize: 14,
+    width: '100%',
+    textAlign: 'right', 
+    fontSize: 17,
     color: colors.textSecondary,
   },
   loginButton: {
-    width: "100%",
+    width: "50%",
     backgroundColor: colors.primary,
     paddingVertical: 15,
     borderRadius: 50,
@@ -80,7 +78,7 @@ export const styles = StyleSheet.create({
   },
   dividerText: {
     width: '100%',
-    fontSize: 14,
+    fontSize: 17,
     color: colors.textSecondary,
     marginTop: 10,
     textAlign: 'center',

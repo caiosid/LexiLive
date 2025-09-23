@@ -25,15 +25,16 @@ export const styles = StyleSheet.create({
   },
   input: {
     width: "100%",
+    fontSize: 17,
     height: 50,
     borderWidth: 1,
     borderColor: colors.inputBorder,
-    borderRadius: 10,
+    borderRadius: 20,
     paddingHorizontal: 15,
     marginVertical: 10,
   },
   loginButton: {
-    width: "100%",
+    width: "50%",
     backgroundColor: colors.primary,
     paddingVertical: 15,
     borderRadius: 50,
@@ -67,7 +68,7 @@ export const styles = StyleSheet.create({
   },
   dividerText: {
     width: "100%",
-    fontSize: 14,
+    fontSize: 17,
     color: colors.textSecondary,
     marginTop: 10,
     textAlign: "center",
