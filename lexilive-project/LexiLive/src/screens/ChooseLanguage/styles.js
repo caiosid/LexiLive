@@ -39,7 +39,7 @@ export const styles = StyleSheet.create({
   languageButton: {
     flexDirection: "row",
     alignItems: "center",
-    borderRadius: 15,
+    borderRadius: 20,
     padding: 15,
     marginVertical: 5,
     borderWidth: 1,
@@ -58,7 +58,7 @@ export const styles = StyleSheet.create({
     padding: 10,
     alignItems: "center",
     backgroundColor: colors.primary,
-    borderRadius: 50,
+    borderRadius: 20,
     alignSelf: "center",
   },
   titleButton: {
