@@ -42,7 +42,6 @@ export default function Register() {
         // envia para o backend
         const result = await registerUser(name, email, password);
         Alert.alert("Sucesso", result.message);
-        // aqui você pode limpar os campos ou redirecionar
         setName("");
         setEmail("");
         setConfirmEmail("");
