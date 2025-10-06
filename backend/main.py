@@ -1,4 +1,5 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, File, UploadFile
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, EmailStr, constr
 from passlib.context import CryptContext
 import asyncpg
@@ -6,6 +7,14 @@ from contextlib import asynccontextmanager
 import os
 import bcrypt
 from fastapi.middleware.cors import CORSMiddleware
+from ultralytics import YOLO
+from PIL import Image
+import io
+import cv2
+
+
+
+model = YOLO("best.pt")  # <-- path to your model
 
 # Configuração do Neon
 DATABASE_URL = os.getenv("DATABASE_URL", 'postgresql://neondb_owner:npg_1VpXQlR7FAzt@ep-patient-tooth-a8keey1o-pooler.eastus2.azure.neon.tech/neondb?sslmode=require&channel_binding=require')
@@ -60,3 +69,25 @@ async def register(user: UserCreate):
 @app.get("/")
 async def main():
     return {"status": "running"}
+
+@app.post("/detect/")
+async def detect_objects(file: UploadFile = File(...)):
+    # Read image
+    contents = await file.read()
+    image = Image.open(io.BytesIO(contents)).convert("RGB")
+    results = model(image)
+
+    detections = []
+    for r in results:
+        boxes = r.boxes
+        for box in boxes:
+            cls_id = int(box.cls[0])
+            conf = float(box.conf[0])
+            x1, y1, x2, y2 = map(float, box.xyxy[0])
+            detections.append({
+                "class": model.names[cls_id],
+                "confidence": conf,
+                "bbox": [x1, y1, x2, y2]
+            })
+
+    return JSONResponse(content={"detections": detections})
