@@ -33,7 +33,6 @@ export const styles = StyleSheet.create({
     width: "100%",
     fontSize: 20,
     color: colors.textSecondary,
-    color: "#888",
     textAlign: "center",
     marginTop: 5,
     marginBottom: 10,
