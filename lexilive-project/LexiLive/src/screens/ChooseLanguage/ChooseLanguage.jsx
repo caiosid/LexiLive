@@ -4,11 +4,7 @@ import { styles } from "./styles";
 export default function ChooseLanguage() {
   return (
     <View style={styles.container}>
-      
-      <Image
-        source={require("../../assets/language.png")}
-        style={styles.logo}
-      />
+      <Image source={require("../../assets/lente.png")} style={styles.logo} />
       <Text style={styles.title}>Selecione o seu idioma</Text>
       <Text style={styles.subTitle}>Idiomas</Text>
 

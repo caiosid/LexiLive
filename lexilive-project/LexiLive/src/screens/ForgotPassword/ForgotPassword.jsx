@@ -23,10 +23,7 @@ export default function ForgotPassword() {
       style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      <Image
-        source={require("../../assets/codigo-de-senha.png")}
-        style={styles.logo}
-      />
+      <Image source={require("../../assets/lente.png")} style={styles.logo} />
 
       <Text style={styles.title}>Esqueceu a sua senha?</Text>
 

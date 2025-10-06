@@ -4,6 +4,7 @@ import Welcome from "../screens/Welcome/Welcome";
 import ChooseLanguage from "../screens/ChooseLanguage/ChooseLanguage";
 import ForgotPassword from "../screens/ForgotPassword/ForgotPassword";
 import Register from "../screens/Register/Register";
+import Camera from "../screens/Camera/Camera";
 const { Screen, Navigator } = createNativeStackNavigator();
 
 export function StackRoutes() {
@@ -45,7 +46,7 @@ export function StackRoutes() {
         }}
         component={ForgotPassword}
       />
-        <Screen
+      <Screen
         name="Register"
         options={{
           title: "Register",
@@ -53,6 +54,15 @@ export function StackRoutes() {
           headerShown: false,
         }}
         component={Register}
+      />
+      <Screen
+        name="Camera"
+        options={{
+          title: "Camera",
+          headerTitleAlign: "center",
+          headerShown: false,
+        }}
+        component={Camera}
       />
     </Navigator>
   );

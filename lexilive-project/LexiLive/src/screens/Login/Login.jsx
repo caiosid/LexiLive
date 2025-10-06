@@ -7,11 +7,15 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
+import { useState } from "react";
 import { useNavigation } from "@react-navigation/native";
 import { FontAwesome } from "@expo/vector-icons";
 import { styles } from "./styles";
 
 export default function Login() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
   const navigation = useNavigation();
 
   function handleForgotPassword() {
@@ -35,6 +39,9 @@ export default function Login() {
         placeholder="Email ou nome de usuário"
         textAlign="center"
         keyboardType="email-address"
+        value={email}
+        onChangeText={setEmail}
+        autoCapitalize="none"
         placeholderTextColor="#b588c6ff"
       />
       <TextInput
@@ -43,6 +50,8 @@ export default function Login() {
         secureTextEntry={true}
         textAlign="center"
         placeholderTextColor="#b588c6ff"
+        value={password}
+        onChangeText={setPassword}
       />
       <TouchableOpacity
         style={styles.forgotPasswordContainer}
