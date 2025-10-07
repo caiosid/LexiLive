@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, EmailStr, constr
 from passlib.context import CryptContext
@@ -34,6 +34,11 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str
 
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
+
 async def get_pool():
     return await asyncpg.create_pool(DATABASE_URL, ssl="require")
 
@@ -65,6 +70,32 @@ async def register(user: UserCreate):
     except Exception as e:
         print("Erro detalhado:", e)
         raise HTTPException(status_code=500, detail="Erro interno do servidor.")
+    
+@app.post("/login")
+async def login(user: UserLogin):
+    try:
+        query = "SELECT id, password_hash FROM app.users WHERE email = $1;"
+        async with app.state.pool.acquire() as conn:
+            row = await conn.fetchrow(query, user.email)
+
+        if row is None:
+            raise HTTPException(status_code=401, detail="Email incorreto ou não cadastrado.")
+
+        stored_hash = row["password_hash"]
+        password_bytes = user.password.encode("utf-8")[:72]
+
+        if not bcrypt.checkpw(password_bytes, stored_hash.encode("utf-8")):
+            raise HTTPException(status_code=401, detail="Email ou senha incorretos.")
+
+        return {"id": row["id"], "message": "Autenticado com sucesso!"}
+    except HTTPException:
+        raise
+
+    except Exception as e:
+        print("Erro ao autenticar:", e)
+        raise HTTPException(status_code=500, detail="Erro interno do servidor.")
+    
+
 # teste se API está funcionando
 @app.get("/")
 async def main():
