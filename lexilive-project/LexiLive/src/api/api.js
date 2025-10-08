@@ -1,4 +1,4 @@
-export const API_URL = "http://192.168.0.7:8000"; 
+export const API_URL = "http://192.168.0.7:8000";
 
 export async function registerUser(name, email, password) {
   try {
@@ -16,7 +16,7 @@ export async function registerUser(name, email, password) {
       throw new Error(data.detail || "Erro ao registrar usuário");
     }
 
-    return data; 
+    return data;
   } catch (err) {
     console.error("Erro na API:", err.message);
     throw err;

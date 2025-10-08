@@ -1,128 +1,187 @@
-import { View, Text, TouchableOpacity, Linking, Platform } from "react-native";
-import { useState, useEffect } from "react";
 import { CameraView, useCameraPermissions } from "expo-camera";
-import { LightSensor } from "expo-sensors";
+import { useRef, useState } from "react";
+import {
+  TouchableOpacity,
+  Pressable,
+  StyleSheet,
+  View,
+  Text,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { styles } from "./styles";
+import { Image } from "expo-image";
+import AntDesign from "@expo/vector-icons/AntDesign";
+import Feather from "@expo/vector-icons/Feather";
+import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 
 export default function Camera() {
-  // --- Estados da Câmera ---
-  const [facing, setFacing] = useState("back");
   const [permission, requestPermission] = useCameraPermissions();
-
-  const [flash, setFlash] = useState("off");
-
-  // --- Estados do Sensor de Luz ---
-  const [{ illuminance }, setData] = useState({ illuminance: 0 }); // Valor do Lux
-  const [sensorSubscription, setSensorSubscription] = useState(null); // Inscrição do sensor
-
-  // --- Funções do Sensor de Luz ---
-
-  const subscribeLightSensor = () => {
-    // A cada atualização do sensor, chamamos setData para atualizar o estado
-    setSensorSubscription(
-      LightSensor.addListener((sensorData) => {
-        setData(sensorData);
-      })
-    );
-  };
-
-  const unsubscribeLightSensor = () => {
-    // Remove a inscrição para parar de ler o sensor e libera recursos
-    sensorSubscription && sensorSubscription.remove();
-    setSensorSubscription(null);
-  };
-
-  // Efeito colateral: Inicia a leitura do sensor na montagem e para na desmontagem.
-  useEffect(() => {
-    if (Platform.OS === "android") {
-      // O LightSensor só é amplamente disponível no Android
-      subscribeLightSensor();
-      return () => unsubscribeLightSensor();
-    }
-    // O array de dependências vazio garante que isso rode apenas na montagem/desmontagem
-  }, []);
-
-  // --- Lógica de Permissões da Câmera (Sem Alteração) ---
+  const ref = useRef(null);
+  const [uri, setUri] = useState(null);
+  const [mode, setMode] = useState("picture");
+  const [facing, setFacing] = useState("back");
+  const [recording, setRecording] = useState(false);
 
   if (!permission) {
-    return <View />;
+    return null;
   }
 
   if (!permission.granted) {
     return (
       <View style={styles.container}>
-        <TouchableOpacity onPress={requestPermission} style={styles.button}>
+        <Text style={styles.textPermision}>Permissão</Text>
+        <TouchableOpacity
+          onPress={requestPermission}
+          style={styles.buttonPermission}
+        >
           <Ionicons name="camera" size={30} color="white" />
         </TouchableOpacity>
       </View>
     );
   }
 
-  // --- Funções de Controle da Câmera (Leves Ajustes) ---
+  const takePicture = async () => {
+    const photo = await ref.current?.takePictureAsync();
+    if (photo?.uri) setUri(photo.uri);
+  };
 
-  function toggleCameraFacing() {
-    setFacing((current) => (current === "back" ? "front" : "back"));
-  }
+  const recordVideo = async () => {
+    if (recording) {
+      setRecording(false);
+      ref.current?.stopRecording();
+      return;
+    }
+    setRecording(true);
+    const video = await ref.current?.recordAsync();
+    console.log({ video });
+  };
 
-  function toggleFlash() {
-    setFlash((current) => (current === "off" ? "torch" : "off"));
-  }
+  const toggleMode = () => {
+    setMode((prev) => (prev === "picture" ? "video" : "picture"));
+  };
 
-  function goToSettings() {
-    Linking.openSettings();
-  }
+  const toggleFacing = () => {
+    setFacing((prev) => (prev === "back" ? "front" : "back"));
+  };
 
-  function takePicture() {
-    console.log("Tirando foto...");
-  }
+  const renderPicture = (uri) => {
+    return (
+      <View style={styles.container}>
+        <Image
+          source={{ uri }}
+          contentFit="contain"
+          style={{ width: 650, height: 650, aspectRatio: 1 }}
+        />
+        <TouchableOpacity
+          onPress={() => setUri(null)}
+          style={styles.buttonPermission}
+        >
+          <Ionicons name="image" size={30} color="white" />
+        </TouchableOpacity>
+      </View>
+    );
+  };
 
-  // --- Interface de Usuário ---
+  const renderCamera = () => {
+    return (
+      <View style={styles.cameraContainer}>
+        <CameraView
+          style={styles.camera}
+          ref={ref}
+          mode={mode}
+          facing={facing}
+          mute={false}
+          responsiveOrientationWhenOrientationLocked
+        />
+        <View style={styles.shutterContainer}>
+          <Pressable onPress={toggleMode}>
+            {mode === "picture" ? (
+              <AntDesign name="picture" size={32} color="white" />
+            ) : (
+              <Feather name="video" size={32} color="white" />
+            )}
+          </Pressable>
+          <Pressable onPress={mode === "picture" ? takePicture : recordVideo}>
+            {({ pressed }) => (
+              <View
+                style={[
+                  styles.shutterBtn,
+                  {
+                    opacity: pressed ? 0.5 : 1,
+                  },
+                ]}
+              >
+                <View
+                  style={[
+                    styles.shutterBtnInner,
+                    {
+                      backgroundColor: mode === "picture" ? "white" : "red",
+                    },
+                  ]}
+                />
+              </View>
+            )}
+          </Pressable>
+          <Pressable onPress={toggleFacing}>
+            <FontAwesome6 name="rotate-left" size={32} color="white" />
+          </Pressable>
+        </View>
+      </View>
+    );
+  };
 
   return (
     <View style={styles.container}>
-      <CameraView
-        style={styles.camera}
-        facing={facing}
-        cameraOptions={{
-          flash: flash,
-          zoom: 0,
-          hdr: true,
-        }}
-      />
-
-      <View style={styles.topBar}>
-        <TouchableOpacity onPress={goToSettings} style={styles.iconButton}>
-          <Ionicons name="arrow-back" size={30} color="white" />
-        </TouchableOpacity>
-
-        <View style={styles.luxDisplay}>
-          <Text style={styles.luxText}>
-            LUX: {Platform.OS === "android" ? illuminance.toFixed(2) : "N/D"}
-          </Text>
-        </View>
-
-        <TouchableOpacity onPress={toggleFlash} style={styles.iconButton}>
-          <Ionicons
-            name={flash === "torch" ? "flashlight" : "flash-off"}
-            size={30}
-            color="white"
-          />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={toggleCameraFacing}
-          style={styles.iconButton}
-        >
-          <Ionicons name="camera-reverse-outline" size={30} color="white" />
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.bottomBar}>
-        <TouchableOpacity style={styles.captureButton} onPress={takePicture}>
-          <View style={styles.captureButtonInner} />
-        </TouchableOpacity>
-      </View>
+      {uri ? renderPicture(uri) : renderCamera()}
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 20,
+  },
+  textPermision: {
+    width: "100%",
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#6b7280",
+    textAlign: "center",
+  },
+  buttonPermission: {
+    backgroundColor: "#d946ef",
+    borderRadius: 35,
+    margin: 10,
+    padding: 15,
+  },
+  cameraContainer: StyleSheet.absoluteFillObject,
+  camera: StyleSheet.absoluteFillObject,
+  shutterContainer: {
+    position: "absolute",
+    bottom: 44,
+    left: 0,
+    width: "100%",
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 30,
+  },
+  shutterBtn: {
+    backgroundColor: "transparent",
+    borderWidth: 5,
+    borderColor: "white",
+    width: 85,
+    height: 85,
+    borderRadius: 45,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  shutterBtnInner: {
+    width: 70,
+    height: 70,
+    borderRadius: 50,
+  },
+});
