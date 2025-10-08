@@ -42,7 +42,7 @@ export default function Welcome() {
 
       <View style={styles.bottomContainer}>
         <TouchableOpacity onPress={openScreen}>
-          <Text style={styles.bottomText}>Acesse sua conta</Text>
+          <Text style={styles.bottomText}>Crie sua conta</Text>
         </TouchableOpacity>
       </View>
     </View>
