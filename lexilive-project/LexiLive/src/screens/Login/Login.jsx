@@ -11,6 +11,8 @@ import { useState } from "react";
 import { useNavigation } from "@react-navigation/native";
 import { FontAwesome } from "@expo/vector-icons";
 import { styles } from "./styles";
+import { loginUser } from "../../api/api";
+import { Alert } from "react-native";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -26,6 +28,18 @@ export default function Login() {
     navigation.navigate("Register");
   }
 
+  const login = async() =>{
+    try{
+      const result = await loginUser(email,password)
+      Alert.alert("Sucesso", result.message ?? "Login realizado com sucesso!");
+      navigation.navigate("ChooseLanguage");
+    }catch(err){
+      Alert.alert("Erro", err.message);
+    }
+  }
+    
+  
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -36,7 +50,7 @@ export default function Login() {
 
       <TextInput
         style={styles.input}
-        placeholder="Email ou nome de usuário"
+        placeholder="Email de usuário"
         textAlign="center"
         keyboardType="email-address"
         value={email}
@@ -61,7 +75,7 @@ export default function Login() {
         <Text style={styles.forgotPasswordText}>Esqueceu sua senha?</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.loginButton} activeOpacity={0.7}>
+      <TouchableOpacity style={styles.loginButton} activeOpacity={0.7} onPress={login}>
         <Text style={styles.loginButtonText}>Login</Text>
       </TouchableOpacity>
 

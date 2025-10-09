@@ -36,9 +36,9 @@ export default function Welcome() {
         <Text style={styles.buttonText}>Começar</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.buttonCam} onPress={camera}>
+      {/* <TouchableOpacity style={styles.buttonCam} onPress={camera}>
         <Ionicons name="camera" size={30} color="white" />
-      </TouchableOpacity>
+      </TouchableOpacity> */}
 
       <View style={styles.bottomContainer}>
         <TouchableOpacity onPress={openScreen}>
