@@ -1,4 +1,4 @@
-export const API_URL = "http://192.168.0.66:8000";
+export const API_URL = "http://192.168.0.70:8000";
 
 export async function registerUser(name, email, password) {
   try {
@@ -37,6 +37,39 @@ export async function loginUser(email, password) {
 
     if (!response.ok) {
       throw new Error(data.detail || "Erro ao fazer login");
+    }
+
+    return data;
+  } catch (err) {
+    console.error("Erro na API:", err.message);
+    throw err;
+  }
+}
+
+export async function detectObjects(uri) {
+  try {
+    const filename = uri.split("/").pop();
+    const fileType = "image/jpeg";
+
+    const formData = new FormData();
+    formData.append("file", {
+      uri,
+      name: filename,
+      type: fileType,
+    });
+
+    const response = await fetch(`${API_URL}/detect/`, {
+      method: "POST",
+      body: formData,
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.detail || "Erro ao detectar objetos");
     }
 
     return data;

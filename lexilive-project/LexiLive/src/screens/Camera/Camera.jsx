@@ -12,6 +12,7 @@ import { Image } from "expo-image";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Feather from "@expo/vector-icons/Feather";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
+import { detectObjects } from "../../api/api";
 
 export default function Camera() {
   const [permission, requestPermission] = useCameraPermissions();
@@ -20,6 +21,11 @@ export default function Camera() {
   const [mode, setMode] = useState("picture");
   const [facing, setFacing] = useState("back");
   const [recording, setRecording] = useState(false);
+  const [detections, setDetections] = useState(null);
+  const imageWidth = 650;
+  const imageHeight = 650;
+
+
 
   if (!permission) {
     return null;
@@ -41,7 +47,17 @@ export default function Camera() {
 
   const takePicture = async () => {
     const photo = await ref.current?.takePictureAsync();
-    if (photo?.uri) setUri(photo.uri);
+    if (photo?.uri) {
+      setUri(photo.uri);
+      const result = await detectObjects(photo.uri);
+      console.log(result)
+      setDetections(result.detections || []);
+      console.log(detections)
+      detections.forEach((det, i) => {
+        console.log(`Detection ${i}:`, det.class, det.confidence, det.bbox);
+      });
+      console.log("Detections:", result);
+    }
   };
 
   const recordVideo = async () => {
@@ -64,21 +80,12 @@ export default function Camera() {
   };
 
   const renderPicture = (uri) => {
-    return (
-      <View style={styles.container}>
-        <Image
-          source={{ uri }}
-          contentFit="contain"
-          style={{ width: 650, height: 650, aspectRatio: 1 }}
-        />
-        <TouchableOpacity
-          onPress={() => setUri(null)}
-          style={styles.buttonPermission}
-        >
-          <Ionicons name="image" size={30} color="white" />
-        </TouchableOpacity>
-      </View>
-    );
+    return (<View style={styles.container}>
+      <Image source={{ uri }} contentFit="contain" style={{ width: 650, height: 650, aspectRatio: 1 }} />
+      <TouchableOpacity onPress={() => setUri(null)} style={styles.buttonPermission} >
+        <Ionicons name="image" size={30} color="white" />
+      </TouchableOpacity>
+    </View>);
   };
 
   const renderCamera = () => {
