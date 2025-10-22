@@ -12,6 +12,7 @@ import { Image } from "expo-image";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Feather from "@expo/vector-icons/Feather";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
+import { detectObjects } from "../../api/api";
 
 export default function Camera() {
   const [permission, requestPermission] = useCameraPermissions();
@@ -20,6 +21,12 @@ export default function Camera() {
   const [mode, setMode] = useState("picture");
   const [facing, setFacing] = useState("back");
   const [recording, setRecording] = useState(false);
+  const [detections, setDetections] = useState(null);
+  const [layout, setLayout] = useState({ width: 0, height: 0 });
+  const imageHeight = 650
+  const imageWidth = 100
+
+
 
   if (!permission) {
     return null;
@@ -41,7 +48,17 @@ export default function Camera() {
 
   const takePicture = async () => {
     const photo = await ref.current?.takePictureAsync();
-    if (photo?.uri) setUri(photo.uri);
+    if (photo?.uri) {
+      setUri(photo.uri);
+      const result = await detectObjects(photo.uri);
+      console.log(result)
+      setDetections(result.detections || []);
+      console.log(detections)
+      detections.forEach((det, i) => {
+        console.log(`Detection ${i}:`, det.class, det.confidence, det.bbox);
+      });
+      console.log("Detections:", result);
+    }
   };
 
   const recordVideo = async () => {
@@ -64,22 +81,66 @@ export default function Camera() {
   };
 
   const renderPicture = (uri) => {
-    return (
-      <View style={styles.container}>
+  return (
+    <View style={styles.container}>
+      <View style={{ position: "relative" }}>
         <Image
           source={{ uri }}
-          contentFit="contain"
-          style={{ width: 650, height: 650, aspectRatio: 1 }}
+          // contentFit="contain"
+          style={{ width: imageWidth, height: imageHeight, aspectRatio: 1 }}
+          // onLayout={(e) => {
+          //   const { width, height } = e.nativeEvent.layout;
+          //   setLayout({ width, height });
+          // }}
+          
         />
-        <TouchableOpacity
-          onPress={() => setUri(null)}
-          style={styles.buttonPermission}
-        >
-          <Ionicons name="image" size={30} color="white" />
-        </TouchableOpacity>
+        {/* Draw boxes */}
+        {detections && detections.map((det, i) => {
+          const [x1, y1, x2, y2] = det.bbox; // normalized coords
+          const left = x1 * layout.width;
+          const top = y1 * layout.height;
+          const boxWidth = (x2 - x1) * layout.width;
+          const boxHeight = (y2 - y1) * layout.height;
+
+          return (
+            <View
+              key={i}
+              style={{
+                position: "absolute",
+                left,
+                top,
+                width: boxWidth,
+                height: boxHeight,
+                borderWidth: 2,
+                borderColor: "red",
+              }}
+            >
+              <Text
+                style={{
+                  position: "absolute",
+                  top: -20,
+                  left: 0,
+                  color: "red",
+                  backgroundColor: "rgba(0,0,0,0.5)",
+                  fontSize: 12,
+                }}
+              >
+                {det.class} ({(det.confidence * 100).toFixed(1)}%)
+              </Text>
+            </View>
+          );
+        })}
       </View>
-    );
-  };
+
+      <TouchableOpacity
+        onPress={() => setUri(null)}
+        style={styles.buttonPermission}
+      >
+        <Ionicons name="image" size={30} color="white" />
+      </TouchableOpacity>
+    </View>
+  );
+};
 
   const renderCamera = () => {
     return (
