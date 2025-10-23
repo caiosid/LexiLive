@@ -1,4 +1,4 @@
-export const API_URL = "http://192.168.0.13:8000";
+export const API_URL = "http://192.168.1.14:8000";
 
 export async function registerUser(name, email, password) {
   try {
@@ -48,33 +48,46 @@ export async function loginUser(email, password) {
 
 export async function detectObjects(uri) {
   try {
-    const filename = uri.split("/").pop();
-    const fileType = "image/jpeg";
-
     const formData = new FormData();
-    formData.append("file", {
-      uri,
-      name: filename,
-      type: fileType,
-    });
 
-    const response = await fetch(`${API_URL}/detect/`, {
+    // Verifica se é uma URI de arquivo local ou base64
+    if (uri.startsWith("file://") || uri.startsWith("blob:")) {
+      
+      const filename = uri.split("/").pop();
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `image/${match[1]}` : `image/jpeg`;
+
+      formData.append("file", {
+        uri,
+        name: filename,
+        type,
+      });
+    } else {
+      // No navegador: baixa a imagem como blob real
+      const response = await fetch(uri);
+      const blob = await response.blob();
+      formData.append("file", blob, "photo.jpg");
+    }
+
+    // Faz a requisição
+    const response = await fetch("http://127.0.0.1:8000/detect/", {
       method: "POST",
       body: formData,
       headers: {
-        "Content-Type": "multipart/form-data",
+        Accept: "application/json",
       },
     });
 
-    const data = await response.json();
-
     if (!response.ok) {
-      throw new Error(data.detail || "Erro ao detectar objetos");
+      const errorText = await response.text();
+      console.error("Erro na resposta do servidor:", errorText);
+      throw new Error(`Erro ${response.status}`);
     }
 
-    return data;
-  } catch (err) {
-    console.error("Erro na API:", err.message);
-    throw err;
+    // 3️⃣ Retorna JSON
+    return await response.json();
+  } catch (error) {
+    console.error("Erro ao detectar objetos:", error);
+    return { detections: [] };
   }
 }

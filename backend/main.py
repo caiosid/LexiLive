@@ -1,5 +1,6 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.responses import JSONResponse
+from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel, EmailStr, constr
 from passlib.context import CryptContext
 import asyncpg
@@ -11,14 +12,14 @@ from ultralytics import YOLO
 from PIL import Image
 import io
 import cv2
-from jose import JOSEError, jwk
+from jose import JOSEError, jwt
 from datetime import datetime, timedelta
 
 
 # Configuração do JWT
 SECRET_KEY = "NddtUw5EKT3N?++"
 ALGORITHM = "HS256"
-ACESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 # Função para gerar token
 
@@ -138,7 +139,8 @@ async def main():
 
 @app.post("/detect/")
 async def detect_objects(file: UploadFile = File(...)):
-    # Read image
+    
+    print("Arquivo recebido:", file.filename, file.content_type)
     contents = await file.read()
     image = Image.open(io.BytesIO(contents)).convert("RGB")
     results = model(image)
