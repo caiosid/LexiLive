@@ -70,7 +70,7 @@ export async function detectObjects(uri) {
     }
 
     // Faz a requisição
-    const response = await fetch("http://127.0.0.1:8000/detect/", {
+    const response = await fetch(`${API_URL}/detect`, {
       method: "POST",
       body: formData,
       headers: {
@@ -84,7 +84,7 @@ export async function detectObjects(uri) {
       throw new Error(`Erro ${response.status}`);
     }
 
-    // 3️⃣ Retorna JSON
+    // Retorna JSON
     return await response.json();
   } catch (error) {
     console.error("Erro ao detectar objetos:", error);

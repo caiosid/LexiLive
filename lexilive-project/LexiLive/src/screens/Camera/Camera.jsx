@@ -1,5 +1,5 @@
 import { CameraView, useCameraPermissions } from "expo-camera";
-import { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import {
   TouchableOpacity,
   Pressable,
@@ -8,292 +8,292 @@ import {
   Text,
   Dimensions,
   Image as RNImage,
+  Platform,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
+import { MotiView } from "moti";
+import { Ionicons } from "@expo/vector-icons";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Feather from "@expo/vector-icons/Feather";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
+import * as Speech from "expo-speech";
 import { detectObjects } from "../../api/api";
+
+const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
 export default function Camera() {
   const [permission, requestPermission] = useCameraPermissions();
-  const ref = useRef(null);
+  const cameraRef = useRef(null);
+
   const [uri, setUri] = useState(null);
   const [mode, setMode] = useState("picture");
   const [facing, setFacing] = useState("back");
-  const [recording, setRecording] = useState(false);
-  const [detections, setDetections] = useState(null);
-  const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
+  const [detections, setDetections] = useState([]);
   const [photoSize, setPhotoSize] = useState({ width: 0, height: 0 });
+  const [wrapperSize, setWrapperSize] = useState({ width: screenWidth, height: screenHeight });
 
-  if (!permission) return null;
+  const speakLabel = (text) => {
+    try {
+      Speech.speak(text, { language: "pt-BR", rate: 1.0, pitch: 1.0 });
+    } catch (e) {
+      console.warn("Erro ao falar:", e);
+    }
+  };
 
-  if (!permission.granted) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.textPermision}>Permissão para usar a câmera</Text>
-        <TouchableOpacity
-          onPress={requestPermission}
-          style={styles.buttonPermission}
-        >
-          <Ionicons name="camera" size={30} color="white" />
-        </TouchableOpacity>
-      </View>
-    );
-  }
+  const getScaledBox = (bbox) => {
+    const [x1, y1, x2, y2] = bbox;
+    const boxWidth = x2 - x1;
+    const boxHeight = y2 - y1;
+
+    if (!photoSize.width || !photoSize.height) {
+      return { left: 0, top: 0, width: 0, height: 0 };
+    }
+
+    const scaleX = wrapperSize.width / photoSize.width;
+    const scaleY = wrapperSize.height / photoSize.height;
+
+    return {
+      left: x1 * scaleX,
+      top: y1 * scaleY,
+      width: boxWidth * scaleX,
+      height: boxHeight * scaleY,
+    };
+  };
 
   const takePicture = async () => {
-    const photo = await ref.current?.takePictureAsync();
-    if (photo?.uri) {
-      setUri(photo.uri);
+    const photo = await cameraRef.current?.takePictureAsync();
+    if (!photo?.uri) return;
+    setUri(photo.uri);
 
-      // Captura tamanho real da imagem
-      RNImage.getSize(photo.uri, (width, height) => {
-        setPhotoSize({ width, height });
-        console.log("Resolução real da foto:", width, "x", height);
-      });
-      
-      // Envia para o backend
-      const result = await detectObjects(photo.uri);
-      setDetections(result.detections || []);
-      console.log("Detections:", result.detections);
-    }
+    RNImage.getSize(photo.uri, (w, h) => {
+      setPhotoSize({ width: w, height: h });
+    });
+
+    const res = await detectObjects(photo.uri);
+    setDetections(res?.detections || []);
   };
 
-  const recordVideo = async () => {
-    if (recording) {
-      setRecording(false);
-      ref.current?.stopRecording();
-      return;
-    }
-    setRecording(true);
-    const video = await ref.current?.recordAsync();
-    console.log({ video });
-  };
+  const toggleFacing = () => setFacing((prev) => (prev === "back" ? "front" : "back"));
+  const toggleMode = () => setMode((p) => (p === "picture" ? "video" : "picture"));
 
-  const toggleMode = () => {
-    setMode((prev) => (prev === "picture" ? "video" : "picture"));
-  };
+  const renderCamera = () => (
+    <View style={styles.cameraContainer}>
+      <CameraView
+        style={StyleSheet.absoluteFill}
+        ref={cameraRef}
+        mode={mode}
+        facing={facing}
+      />
+      <View style={styles.shutterContainer} pointerEvents="auto">
+        <Pressable onPress={toggleMode}>
+          {mode === "picture" ? (
+            <AntDesign name="picture" size={28} color="white" />
+          ) : (
+            <Feather name="video" size={28} color="white" />
+          )}
+        </Pressable>
 
-  const toggleFacing = () => {
-    setFacing((prev) => (prev === "back" ? "front" : "back"));
-  };
-
-  // Exibição da imagem capturada com boxes ajustadas automaticamente
-  const renderPicture = (uri) => {
-    return (
-      <View style={styles.container}>
-        <View
-          style={styles.imageWrapper}
-          onLayout={(e) => {
-            const { width, height } = e.nativeEvent.layout;
-            setImageSize({ width, height });
-          }}
-        >
-          <Image
-            source={{ uri }}
-            contentFit="contain"
-            style={styles.capturedImage}
-          />
-
-          {/* Renderização das bounding boxes */}
-          {detections &&
-            detections.map((det, i) => {
-              if (!photoSize.width || !photoSize.height) return null;
-
-              const [x1, y1, x2, y2] = det.bbox;
-              const boxWidth = x2 - x1;
-              const boxHeight = y2 - y1;
-
-              const scaleX = imageSize.width / photoSize.width;
-              const scaleY = imageSize.height / photoSize.height;
-
-              const left = x1 * scaleX;
-              const top = y1 * scaleY;
-
-              // Cores baseadas no nome da classe
-              const colors = ["#ef4444", "#22c55e", "#3b82f6", "#eab308", "#a855f7"];
-              const color =
-                colors[Math.abs(det.class.charCodeAt(0) + i) % colors.length];
-
-              return (
-                <View
-                  key={i}
-                  style={{
-                    position: "absolute",
-                    left,
-                    top,
-                    width: boxWidth * scaleX,
-                    height: boxHeight * scaleY,
-                    borderWidth: 2,
-                    borderColor: color,
-                    borderRadius: 8,
-                    backgroundColor: "rgba(255,255,255,0.05)",
-                  }}
-                >
-                  <View
-                    style={{
-                      position: "absolute",
-                      top: -24,
-                      left: 0,
-                      backgroundColor: color,
-                      paddingHorizontal: 6,
-                      paddingVertical: 2,
-                      borderTopLeftRadius: 6,
-                      borderTopRightRadius: 6,
-                    }}
-                  >
-                    <Text
-                      style={{
-                        color: "white",
-                        fontWeight: "bold",
-                        fontSize: 12,
-                        textShadowColor: "rgba(0,0,0,0.3)",
-                        textShadowOffset: { width: 0, height: 1 },
-                        textShadowRadius: 2,
-                      }}
-                    >
-                      {det.class.toUpperCase()} ({(det.confidence * 100).toFixed(1)}%)
-                    </Text>
-                  </View>
-                </View>
-              );
-            })}
-
-        </View>
-
-        <TouchableOpacity
-          onPress={() => {
-            setUri(null);
-            setDetections(null);
-          }}
-          style={styles.buttonPermission}
-        >
-          <Ionicons name="refresh" size={30} color="white" />
-        </TouchableOpacity>
-      </View>
-    );
-  };
-
-  const renderCamera = () => {
-    return (
-      <View style={styles.cameraContainer}>
-        <CameraView
-          style={styles.camera}
-          ref={ref}
-          mode={mode}
-          facing={facing}
-          mute={false}
-          responsiveOrientationWhenOrientationLocked
-        />
-        <View style={styles.shutterContainer}>
-          <Pressable onPress={toggleMode}>
-            {mode === "picture" ? (
-              <AntDesign name="picture" size={32} color="white" />
-            ) : (
-              <Feather name="video" size={32} color="white" />
-            )}
-          </Pressable>
-
-          <Pressable onPress={mode === "picture" ? takePicture : recordVideo}>
-            {({ pressed }) => (
+        <Pressable onPress={takePicture}>
+          {({ pressed }) => (
+            <View style={[styles.shutterBtn, { opacity: pressed ? 0.6 : 1 }]}>
               <View
                 style={[
-                  styles.shutterBtn,
-                  { opacity: pressed ? 0.5 : 1 },
+                  styles.shutterBtnInner,
+                  { backgroundColor: mode === "picture" ? "white" : "red" },
                 ]}
-              >
-                <View
-                  style={[
-                    styles.shutterBtnInner,
-                    { backgroundColor: mode === "picture" ? "white" : "red" },
-                  ]}
-                />
-              </View>
-            )}
-          </Pressable>
+              />
+            </View>
+          )}
+        </Pressable>
 
-          <Pressable onPress={toggleFacing}>
-            <FontAwesome6 name="rotate-left" size={32} color="white" />
-          </Pressable>
-        </View>
+        <Pressable onPress={toggleFacing}>
+          <FontAwesome6 name="rotate-left" size={28} color="white" />
+        </Pressable>
       </View>
-    );
-  };
-
-  return (
-    <View style={styles.container}>
-      {uri ? renderPicture(uri) : renderCamera()}
     </View>
   );
+
+  const renderPicture = () => (
+    <SafeAreaView style={styles.container}>
+      <View
+        style={styles.previewWrapper}
+        onLayout={(e) => {
+          const { width, height } = e.nativeEvent.layout;
+          if (width && height) setWrapperSize({ width, height });
+        }}
+      >
+        {/* Camada imagem e boxes */}
+        <View style={StyleSheet.absoluteFill} pointerEvents="none">
+          <Image
+            source={{ uri }}
+            style={styles.fullImage}
+            contentFit="contain"
+          />
+
+          {detections.map((det, i) => {
+            const { left, top, width, height } = getScaledBox(det.bbox);
+            const color =
+              det.confidence > 0.85
+                ? "#22c55e"
+                : det.confidence > 0.6
+                ? "#eab308"
+                : "#ef4444";
+
+            return (
+              <View
+                key={i}
+                style={[
+                  styles.bbox,
+                  { left, top, width, height, borderColor: color },
+                ]}
+              />
+            );
+          })}
+        </View>
+
+        {/* Camada dos labels (interativa) */}
+        <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
+          {detections.map((det, i) => {
+            const { left, top, width, height } = getScaledBox(det.bbox);
+            const color =
+              det.confidence > 0.85
+                ? "#22c55e"
+                : det.confidence > 0.6
+                ? "#eab308"
+                : "#ef4444";
+            const labelY = top < 30 ? top + height + 2 : top - 22;
+
+            return (
+              <View
+                key={`label-${i}`}
+                style={[
+                  styles.labelContainer,
+                  {
+                    left,
+                    top: labelY,
+                    backgroundColor: color,
+                  },
+                ]}
+                pointerEvents="auto"
+              >
+                <Text style={styles.labelText}>
+                  {det.class.toUpperCase()} ({(det.confidence * 100).toFixed(1)}%)
+                </Text>
+                <TouchableOpacity
+                  onPress={() => speakLabel(det.class)}
+                  style={styles.soundButton}
+                >
+                  <Ionicons name="volume-high" size={14} color="#fff" />
+                </TouchableOpacity>
+              </View>
+            );
+          })}
+        </View>
+
+        {/* Botão refresh */}
+        <View style={styles.topControls}>
+          <TouchableOpacity
+            onPress={() => {
+              setUri(null);
+              setDetections([]);
+            }}
+            style={styles.smallBtn}
+          >
+            <Ionicons name="refresh" size={22} color="white" />
+          </TouchableOpacity>
+        </View>
+      </View>
+    </SafeAreaView>
+  );
+
+  if (!permission) return <View style={styles.loading}><Text>...</Text></View>;
+  if (!permission.granted)
+    return (
+      <SafeAreaView style={styles.container}>
+        <Text style={styles.textPermision}>Permissão para usar a câmera</Text>
+        <TouchableOpacity onPress={requestPermission} style={styles.buttonPermission}>
+          <Ionicons name="camera" size={30} color="white" />
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+
+  return uri ? renderPicture() : renderCamera();
 }
 
-const { width: screenWidth } = Dimensions.get("window");
-
 const styles = StyleSheet.create({
-  container: {
+  container: { flex: 1, backgroundColor: "#000" },
+  cameraContainer: { flex: 1, backgroundColor: "#000" },
+  previewWrapper: {
     flex: 1,
-    backgroundColor: "#000",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  textPermision: {
     width: "100%",
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#6b7280",
-    textAlign: "center",
+    backgroundColor: "#000",
+    justifyContent: "center",
+    alignItems: "center",
   },
-  buttonPermission: {
-    backgroundColor: "#d946ef",
-    borderRadius: 35,
-    margin: 10,
-    padding: 15,
+  fullImage: { width: "100%", height: "100%" },
+  bbox: {
+    position: "absolute",
+    borderWidth: 2,
+    borderRadius: 6,
   },
-  cameraContainer: StyleSheet.absoluteFillObject,
-  camera: StyleSheet.absoluteFillObject,
+  labelContainer: {
+    position: "absolute",
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    zIndex: 30,
+  },
+  labelText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 12,
+    marginRight: 4,
+  },
+  soundButton: { padding: 2 },
   shutterContainer: {
     position: "absolute",
-    bottom: 44,
+    bottom: 30,
     left: 0,
     width: "100%",
-    alignItems: "center",
     flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 30,
+    justifyContent: "space-around",
+    alignItems: "center",
+    zIndex: 50,
   },
   shutterBtn: {
-    backgroundColor: "transparent",
-    borderWidth: 5,
-    borderColor: "white",
-    width: 85,
-    height: 85,
-    borderRadius: 45,
+    width: 78,
+    height: 78,
+    borderRadius: 40,
+    borderWidth: 4,
+    borderColor: "#fff",
     alignItems: "center",
     justifyContent: "center",
   },
-  shutterBtnInner: {
-    width: 70,
-    height: 70,
-    borderRadius: 50,
-  },
-  imageWrapper: {
-    width: screenWidth,
-    aspectRatio: 3 / 4,
-    position: "relative",
-    backgroundColor: "#000",
-  },
-  capturedImage: {
-    width: "100%",
-    height: "100%",
-  },
-  label: {
+  shutterBtnInner: { width: 60, height: 60, borderRadius: 30 },
+  topControls: {
     position: "absolute",
-    top: -20,
-    left: 0,
-    color: "red",
-    backgroundColor: "rgba(0,0,0,0.5)",
-    fontSize: 12,
+    top: 40,
+    alignSelf: "center",
+    zIndex: 100,
+  },
+  smallBtn: {
+    backgroundColor: "#7c3aed",
+    padding: 10,
+    borderRadius: 28,
+  },
+  textPermision: {
+    color: "#9ca3af",
+    textAlign: "center",
+    marginTop: 10,
+  },
+  buttonPermission: {
+    alignSelf: "center",
+    backgroundColor: "#7c3aed",
+    padding: 12,
+    borderRadius: 30,
+    marginTop: 10,
   },
 });
