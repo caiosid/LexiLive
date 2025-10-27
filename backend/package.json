@@ -1,0 +1,8 @@
+{
+  "devDependencies": {
+    "@testing-library/react-native": "^13.3.3",
+    "jest": "^30.2.0",
+    "msw": "^2.11.6",
+    "whatwg-fetch": "^3.6.20"
+  }
+}
