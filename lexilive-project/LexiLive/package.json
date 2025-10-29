@@ -33,12 +33,20 @@
     "react-native-safe-area-context": "~5.6.0",
     "react-native-screens": "~4.16.0",
     "react-native-web": "^0.21.0",
-    "react-native-worklets": "^0.6.1"
+    "react-native-worklets": "0.5.1"
   },
   "jest": {
     "preset": "react-native",
-    "setupFilesAfterEnv": ["<rootDir>/setupTests.js"],
-    "moduleFileExtensions": ["js", "jsx", "json", "ts", "tsx"],
+    "setupFilesAfterEnv": [
+      "<rootDir>/setupTests.js"
+    ],
+    "moduleFileExtensions": [
+      "js",
+      "jsx",
+      "json",
+      "ts",
+      "tsx"
+    ],
     "transformIgnorePatterns": [
       "node_modules/(?!(@react-native|react-native|whatwg-fetch)/)"
     ]

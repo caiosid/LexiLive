@@ -42,8 +42,8 @@ export const styles = StyleSheet.create({
     width: "100%",
   },
   forgotPasswordText: {
-    width: '100%',
-    textAlign: 'right', 
+    width: "100%",
+    textAlign: "right",
     fontSize: 17,
     color: colors.textSecondary,
   },
@@ -56,7 +56,7 @@ export const styles = StyleSheet.create({
     marginTop: 20,
   },
   loginButtonText: {
-    color: colors.background,
+    color: "#fff",
     fontSize: 18,
     fontWeight: "bold",
   },
@@ -66,10 +66,10 @@ export const styles = StyleSheet.create({
     width: "100%",
     marginVertical: 30,
   },
-  dividerOpacity:{
+  dividerOpacity: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center'
+    justifyContent: "center",
+    alignItems: "center",
   },
   dividerLine: {
     flex: 1,
@@ -77,13 +77,12 @@ export const styles = StyleSheet.create({
     backgroundColor: "#ccc",
   },
   dividerText: {
-    width: '100%',
+    width: "100%",
     fontSize: 17,
     color: colors.textSecondary,
     marginTop: 10,
-    textAlign: 'center',
-    justifyContent: 'center',
-    
+    textAlign: "center",
+    justifyContent: "center",
   },
   socialButtonsContainer: {
     flexDirection: "row",
