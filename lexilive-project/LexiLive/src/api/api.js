@@ -52,7 +52,6 @@ export async function detectObjects(uri) {
 
     // Verifica se é uma URI de arquivo local ou base64
     if (uri.startsWith("file://") || uri.startsWith("blob:")) {
-      
       const filename = uri.split("/").pop();
       const match = /\.(\w+)$/.exec(filename);
       const type = match ? `image/${match[1]}` : `image/jpeg`;

@@ -10,7 +10,7 @@ import {
   Image as RNImage,
   Platform,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import { MotiView } from "moti";
 import { Ionicons } from "@expo/vector-icons";
@@ -23,7 +23,7 @@ import { detectObjects } from "../../api/api";
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
 export default function CameraScreen() {
-const [permission, requestPermission] = useCameraPermissions();
+  const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef(null);
 
   const [uri, setUri] = useState(null);
@@ -31,7 +31,10 @@ const [permission, requestPermission] = useCameraPermissions();
   const [facing, setFacing] = useState("back");
   const [detections, setDetections] = useState([]);
   const [photoSize, setPhotoSize] = useState({ width: 0, height: 0 });
-  const [wrapperSize, setWrapperSize] = useState({ width: screenWidth, height: screenHeight });
+  const [wrapperSize, setWrapperSize] = useState({
+    width: screenWidth,
+    height: screenHeight,
+  });
 
   const speakLabel = (text) => {
     try {
@@ -47,7 +50,12 @@ const [permission, requestPermission] = useCameraPermissions();
     const boxWidth = x2 - x1;
     const boxHeight = y2 - y1;
 
-    if (!photoSize.width || !photoSize.height || !wrapperSize.width || !wrapperSize.height) {
+    if (
+      !photoSize.width ||
+      !photoSize.height ||
+      !wrapperSize.width ||
+      !wrapperSize.height
+    ) {
       return { left: 0, top: 0, width: 0, height: 0 };
     }
 
@@ -70,7 +78,10 @@ const [permission, requestPermission] = useCameraPermissions();
         return;
       }
 
-      const photo = await cameraRef.current.takePictureAsync({ quality: 0.7, skipProcessing: true });
+      const photo = await cameraRef.current.takePictureAsync({
+        quality: 0.7,
+        skipProcessing: true,
+      });
 
       if (!photo?.uri) return;
       setUri(photo.uri);
@@ -85,7 +96,10 @@ const [permission, requestPermission] = useCameraPermissions();
           };
           img.onerror = () => {
             // fallback
-            setPhotoSize({ width: photo.width || 1080, height: photo.height || 1920 });
+            setPhotoSize({
+              width: photo.width || 1080,
+              height: photo.height || 1920,
+            });
             resolve();
           };
           img.src = photo.uri;
@@ -98,7 +112,10 @@ const [permission, requestPermission] = useCameraPermissions();
             },
             (err) => {
               console.warn("RNImage.getSize erro:", err);
-              setPhotoSize({ width: photo.width || 1080, height: photo.height || 1920 });
+              setPhotoSize({
+                width: photo.width || 1080,
+                height: photo.height || 1920,
+              });
               resolve();
             }
           );
@@ -122,7 +139,8 @@ const [permission, requestPermission] = useCameraPermissions();
     setFacing((prev) => (prev === "back" ? "front" : "back"));
   };
 
-  const toggleMode = () => setMode((m) => (m === "picture" ? "video" : "picture"));
+  const toggleMode = () =>
+    setMode((m) => (m === "picture" ? "video" : "picture"));
 
   const renderCamera = () => (
     <View style={styles.cameraContainer}>
@@ -146,7 +164,9 @@ const [permission, requestPermission] = useCameraPermissions();
         <Pressable onPress={takePicture}>
           {({ pressed }) => (
             <View style={[styles.shutterBtn, { opacity: pressed ? 0.6 : 1 }]}>
-              <View style={[styles.shutterBtnInner, { backgroundColor: "white" }]} />
+              <View
+                style={[styles.shutterBtnInner, { backgroundColor: "white" }]}
+              />
             </View>
           )}
         </Pressable>
@@ -160,137 +180,181 @@ const [permission, requestPermission] = useCameraPermissions();
 
   const renderPicture = () => {
     const aspectStyle =
-      photoSize.width && photoSize.height ? { aspectRatio: photoSize.width / photoSize.height } : { aspectRatio: 3 / 4 };
+      photoSize.width && photoSize.height
+        ? { aspectRatio: photoSize.width / photoSize.height }
+        : { aspectRatio: 3 / 4 };
 
     return (
-      <SafeAreaView style={styles.container}>
-        <View
-          style={[styles.previewWrapper, aspectStyle]}
-          onLayout={(e) => {
-            const { width, height } = e.nativeEvent.layout;
-            if (width && height) setWrapperSize({ width, height });
-          }}
-        >
-          <View style={StyleSheet.absoluteFill} pointerEvents="none">
-            <Image source={{ uri }} style={styles.fullImage} contentFit="contain" />
-            {/* boxes */}
-            {detections.map((det, i) => {
-              const { left, top, width, height } = getScaledBox(det.bbox);
-              const color = det.confidence > 0.85 ? "#22c55e" : det.confidence > 0.6 ? "#eab308" : "#ef4444";
+      <SafeAreaProvider>
+        <SafeAreaView style={styles.container}>
+          <View
+            style={[styles.previewWrapper, aspectStyle]}
+            onLayout={(e) => {
+              const { width, height } = e.nativeEvent.layout;
+              if (width && height) setWrapperSize({ width, height });
+            }}
+          >
+            <View style={StyleSheet.absoluteFill} pointerEvents="none">
+              <Image
+                source={{ uri }}
+                style={styles.fullImage}
+                contentFit="contain"
+              />
+              {/* boxes */}
+              {detections.map((det, i) => {
+                const { left, top, width, height } = getScaledBox(det.bbox);
+                const color =
+                  det.confidence > 0.85
+                    ? "#22c55e"
+                    : det.confidence > 0.6
+                    ? "#eab308"
+                    : "#ef4444";
 
-              return (
-                <MotiView
-                  key={`box-${i}`}
-                  from={{ opacity: 0, scale: 0.92 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ type: "timing", duration: 380, delay: i * 50 }}
-                  style={[
-                    styles.bbox,
-                    {
-                      left,
-                      top,
-                      width,
-                      height,
-                      borderColor: color,
-                      shadowColor: color,
-                    },
-                  ]}
-                  pointerEvents="none"
-                >
-
+                return (
                   <MotiView
-                    from={{ opacity: 0.18, scale: 1 }}
-                    animate={{ opacity: 0.35, scale: 1.05 }}
+                    key={`box-${i}`}
+                    from={{ opacity: 0, scale: 0.92 }}
+                    animate={{ opacity: 1, scale: 1 }}
                     transition={{
                       type: "timing",
-                      duration: 1200,
-                      loop: true,
-                      repeatReverse: true,
+                      duration: 380,
+                      delay: i * 50,
                     }}
                     style={[
-                      StyleSheet.absoluteFill,
-                      { borderRadius: 6, borderWidth: 2, borderColor: color, backgroundColor: "transparent" },
-                    ]}
-                    pointerEvents="none"
-                  />
-                </MotiView>
-              );
-            })}
-          </View>
-
-          {/* camada de labels */}
-          <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
-            {detections.map((det, i) => {
-              const { left, top, width, height } = getScaledBox(det.bbox);
-              const color = det.confidence > 0.85 ? "#22c55e" : det.confidence > 0.6 ? "#eab308" : "#ef4444";
-              const labelY = top < 30 ? top + height + 4 : top - 26;
-
-              // escala adaptativa
-              const areaRatio = Math.max(0, (width * height) / (wrapperSize.width * wrapperSize.height));
-              const dynamicFont = Math.min(18, Math.max(10, 10 + areaRatio * 2500));
-              const dynamicPadding = Math.min(8, Math.max(4, 4 + areaRatio * 1000));
-
-              return (
-                <MotiView
-                  key={`label-${i}`}
-                  from={{ opacity: 0, scale: 0.86 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ type: "timing", duration: 420, delay: i * 70 }}
-                  style={[
-                    styles.labelContainer,
-                    {
-                      left,
-                      top: labelY,
-                      backgroundColor: color,
-                      paddingHorizontal: dynamicPadding,
-                      paddingVertical: Math.max(2, dynamicPadding / 2),
-                      shadowColor: color,
-                      shadowOffset: { width: 0, height: 1 },
-                      shadowOpacity: 0.75,
-                      shadowRadius: 6,
-                      elevation: 6,
-                    },
-                  ]}
-                  pointerEvents="auto"
-                >
-                  <Text
-                    style={[
-                      styles.labelText,
+                      styles.bbox,
                       {
-                        fontSize: dynamicFont,
-                        textShadowColor: color,
-                        textShadowOffset: { width: 0, height: 0 },
-                        textShadowRadius: 6,
+                        left,
+                        top,
+                        width,
+                        height,
+                        borderColor: color,
+                        shadowColor: color,
                       },
                     ]}
+                    pointerEvents="none"
                   >
-                    {det.class.toUpperCase()} ({(det.confidence * 100).toFixed(1)}%)
-                  </Text>
+                    <MotiView
+                      from={{ opacity: 0.18, scale: 1 }}
+                      animate={{ opacity: 0.35, scale: 1.05 }}
+                      transition={{
+                        type: "timing",
+                        duration: 1200,
+                        loop: true,
+                        repeatReverse: true,
+                      }}
+                      style={[
+                        StyleSheet.absoluteFill,
+                        {
+                          borderRadius: 6,
+                          borderWidth: 2,
+                          borderColor: color,
+                          backgroundColor: "transparent",
+                        },
+                      ]}
+                      pointerEvents="none"
+                    />
+                  </MotiView>
+                );
+              })}
+            </View>
 
-                  <TouchableOpacity
-                    onPress={() => speakLabel(det.class)}
-                    style={[styles.soundButton, { marginLeft: 6 }]}
+            {/* camada de labels */}
+            <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
+              {detections.map((det, i) => {
+                const { left, top, width, height } = getScaledBox(det.bbox);
+                const color =
+                  det.confidence > 0.85
+                    ? "#22c55e"
+                    : det.confidence > 0.6
+                    ? "#eab308"
+                    : "#ef4444";
+                const labelY = top < 30 ? top + height + 4 : top - 26;
+
+                // escala adaptativa
+                const areaRatio = Math.max(
+                  0,
+                  (width * height) / (wrapperSize.width * wrapperSize.height)
+                );
+                const dynamicFont = Math.min(
+                  18,
+                  Math.max(10, 10 + areaRatio * 2500)
+                );
+                const dynamicPadding = Math.min(
+                  8,
+                  Math.max(4, 4 + areaRatio * 1000)
+                );
+
+                return (
+                  <MotiView
+                    key={`label-${i}`}
+                    from={{ opacity: 0, scale: 0.86 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{
+                      type: "timing",
+                      duration: 420,
+                      delay: i * 70,
+                    }}
+                    style={[
+                      styles.labelContainer,
+                      {
+                        left,
+                        top: labelY,
+                        backgroundColor: color,
+                        paddingHorizontal: dynamicPadding,
+                        paddingVertical: Math.max(2, dynamicPadding / 2),
+                        shadowColor: color,
+                        shadowOffset: { width: 0, height: 1 },
+                        shadowOpacity: 0.75,
+                        shadowRadius: 6,
+                        elevation: 6,
+                      },
+                    ]}
+                    pointerEvents="auto"
                   >
-                    <Ionicons name="volume-high" size={Math.max(12, dynamicFont - 2)} color="#fff" />
-                  </TouchableOpacity>
-                </MotiView>
-              );
-            })}
-          </View>
+                    <Text
+                      style={[
+                        styles.labelText,
+                        {
+                          fontSize: dynamicFont,
+                          textShadowColor: color,
+                          textShadowOffset: { width: 0, height: 0 },
+                          textShadowRadius: 6,
+                        },
+                      ]}
+                    >
+                      {det.class.toUpperCase()} (
+                      {(det.confidence * 100).toFixed(1)}%)
+                    </Text>
 
-          <View style={styles.topControls} pointerEvents="auto">
-            <TouchableOpacity
-              onPress={() => {
-                setUri(null);
-                setDetections([]);
-              }}
-              style={styles.smallBtn}
-            >
-              <Ionicons name="refresh" size={20} color="white" />
-            </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => speakLabel(det.class)}
+                      style={[styles.soundButton, { marginLeft: 6 }]}
+                    >
+                      <Ionicons
+                        name="volume-high"
+                        size={Math.max(12, dynamicFont - 2)}
+                        color="#fff"
+                      />
+                    </TouchableOpacity>
+                  </MotiView>
+                );
+              })}
+            </View>
+
+            <View style={styles.topControls} pointerEvents="auto">
+              <TouchableOpacity
+                onPress={() => {
+                  setUri(null);
+                  setDetections([]);
+                }}
+                style={styles.smallBtn}
+              >
+                <Ionicons name="refresh" size={20} color="white" />
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </SafeAreaView>
+        </SafeAreaView>
+      </SafeAreaProvider>
     );
   };
 
@@ -307,7 +371,10 @@ const [permission, requestPermission] = useCameraPermissions();
     return (
       <SafeAreaView style={styles.container}>
         <Text style={styles.textPermision}>Permissão para usar a câmera</Text>
-        <TouchableOpacity onPress={requestPermission} style={styles.buttonPermission}>
+        <TouchableOpacity
+          onPress={requestPermission}
+          style={styles.buttonPermission}
+        >
           <Ionicons name="camera" size={30} color="white" />
         </TouchableOpacity>
       </SafeAreaView>
@@ -320,7 +387,12 @@ const [permission, requestPermission] = useCameraPermissions();
 // ---------- estilos ----------
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#000" },
-  loading: { flex: 1, backgroundColor: "#000", alignItems: "center", justifyContent: "center" },
+  loading: {
+    flex: 1,
+    backgroundColor: "#000",
+    alignItems: "center",
+    justifyContent: "center",
+  },
 
   // câmera
   cameraContainer: { flex: 1, backgroundColor: "#000" },
@@ -343,7 +415,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  shutterBtnInner: { width: 60, height: 60, borderRadius: 30, backgroundColor: "white" },
+  shutterBtnInner: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: "white",
+  },
 
   // preview
   previewWrapper: {
@@ -394,6 +471,17 @@ const styles = StyleSheet.create({
   },
 
   // permissão
-  textPermision: { color: "#cbd5e1", fontSize: 16, textAlign: "center", marginTop: 10 },
-  buttonPermission: { alignSelf: "center", marginTop: 20, backgroundColor: "#7c3aed", padding: 12, borderRadius: 28 },
+  textPermision: {
+    color: "#cbd5e1",
+    fontSize: 16,
+    textAlign: "center",
+    marginTop: 10,
+  },
+  buttonPermission: {
+    alignSelf: "center",
+    marginTop: 20,
+    backgroundColor: "#7c3aed",
+    padding: 12,
+    borderRadius: 28,
+  },
 });
