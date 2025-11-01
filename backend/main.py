@@ -12,7 +12,7 @@ from ultralytics import YOLO
 from PIL import Image
 import io
 import cv2
-from jose import JOSEError, jwt
+from jose import jwt
 from datetime import datetime, timedelta
 
 
