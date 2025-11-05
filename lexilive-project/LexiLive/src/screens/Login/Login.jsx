@@ -28,24 +28,26 @@ export default function Login() {
     navigation.navigate("Register");
   }
 
-  const login = async() =>{
-    try{
-      const result = await loginUser(email,password)
+  const login = async () => {
+    try {
+      const result = await loginUser(email, password);
       Alert.alert("Sucesso", result.message ?? "Login realizado com sucesso!");
       navigation.navigate("ChooseLanguage");
-    }catch(err){
+    } catch (err) {
       Alert.alert("Erro", err.message);
     }
-  }
-    
-  
+  };
 
   return (
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      <Image source={require("../../assets/lente.png")} style={styles.logo} />
+      <Image
+        source={require("../../assets/lente.png")}
+        style={styles.logo}
+        testID="logo-image"
+      />
       <Text style={styles.title}>Sejam Bem-Vindos</Text>
 
       <TextInput
@@ -75,7 +77,11 @@ export default function Login() {
         <Text style={styles.forgotPasswordText}>Esqueceu sua senha?</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.loginButton} activeOpacity={0.7} onPress={login}>
+      <TouchableOpacity
+        style={styles.loginButton}
+        activeOpacity={0.7}
+        onPress={login}
+      >
         <Text style={styles.loginButtonText}>Login</Text>
       </TouchableOpacity>
 
