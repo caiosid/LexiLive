@@ -14,6 +14,8 @@ import io
 import cv2
 from jose import jwt
 from datetime import datetime, timedelta
+import pyopencl as cl
+import numpy as np
 
 
 # Configuração do JWT
@@ -136,19 +138,84 @@ async def login(user: UserLogin):
 async def main():
     return {"status": "running"}
 
+# Uso do detect sem openCL(pyopenCL)
+# @app.post("/detect/")
+# async def detect_objects(file: UploadFile = File(...)):
+    
+#     print("Arquivo recebido:", file.filename, file.content_type)
+#     contents = await file.read()
+#     image = Image.open(io.BytesIO(contents)).convert("RGB")
+#     results = model(image)
+
+#     detections = []
+#     for r in results:
+#         boxes = r.boxes
+#         for box in boxes:
+#             cls_id = int(box.cls[0])
+#             conf = float(box.conf[0])
+#             x1, y1, x2, y2 = map(float, box.xyxy[0])
+#             detections.append({
+#                 "class": model.names[cls_id],
+#                 "confidence": conf,
+#                 "bbox": [x1, y1, x2, y2]
+#             })
+
+#     return JSONResponse(content={"detections": detections})
+
+
+# --- initializar pyopencl ---
+def get_opencl_context():
+    for platform in cl.get_platforms():
+        if "NVIDIA" in platform.name or "Intel" in platform.name:
+            devices = platform.get_devices(device_type=cl.device_type.GPU)
+            if devices:
+                print(f"Using OpenCL on: {platform.name} - {devices[0].name}")
+                return cl.Context(devices=devices)
+    raise RuntimeError("No OpenCL GPU device found.")
+
+ctx = get_opencl_context()
+queue = cl.CommandQueue(ctx)
+
+# --- kernel para copiar imagem ---
+COPY_KERNEL = """
+__kernel void copy_image(__global const uchar *src, __global uchar *dst) {
+    int i = get_global_id(0);
+    dst[i] = src[i];
+}
+"""
+program = cl.Program(ctx, COPY_KERNEL).build()
+
+def copy_with_opencl(image: np.ndarray) -> np.ndarray:
+    """Copia imagem com GPU."""
+    img_flat = image.flatten()
+    output = np.empty_like(img_flat)
+    mf = cl.mem_flags
+
+    src_buf = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=img_flat)
+    dst_buf = cl.Buffer(ctx, mf.WRITE_ONLY, output.nbytes)
+
+    program.copy_image(queue, img_flat.shape, None, src_buf, dst_buf)
+    cl.enqueue_copy(queue, output, dst_buf)
+
+    return output.reshape(image.shape)
 
 @app.post("/detect/")
 async def detect_objects(file: UploadFile = File(...)):
-    
-    print("Arquivo recebido:", file.filename, file.content_type)
     contents = await file.read()
     image = Image.open(io.BytesIO(contents)).convert("RGB")
-    results = model(image)
+    img_np = np.array(image)
+
+    # Usando OpenCL para copiar com GPU
+    img_np_gpu = copy_with_opencl(img_np)
+
+    # Converte para PIL
+    image_gpu = Image.fromarray(img_np_gpu)
+
+    results = model(image_gpu)
 
     detections = []
     for r in results:
-        boxes = r.boxes
-        for box in boxes:
+        for box in r.boxes:
             cls_id = int(box.cls[0])
             conf = float(box.conf[0])
             x1, y1, x2, y2 = map(float, box.xyxy[0])
