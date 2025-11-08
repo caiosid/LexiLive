@@ -16,12 +16,26 @@ from jose import jwt
 from datetime import datetime, timedelta
 import pyopencl as cl
 import numpy as np
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import secrets
+import string
+from pydantic import BaseModel, EmailStr
 
+# Configuração email
+SMTP_SERVER = "smtp.gmail.com"
+SMTP_PORT = 587
+EMAIL_SENDER = "lexi.live.see@gmail.com"   
+EMAIL_PASSWORD = "tyvw elqk ulah fjsa"    
+RESET_TOKEN_EXPIRE_MINUTES = 15
 
 # Configuração do JWT
 SECRET_KEY = "NddtUw5EKT3N?++"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+
 
 # Função para gerar token
 
@@ -65,6 +79,9 @@ class UserLogin(BaseModel):
     email: str
     password: str
 
+class EmailRequest(BaseModel):
+    email: EmailStr
+
 
 async def get_pool():
     return await asyncpg.create_pool(DATABASE_URL, ssl="require")
@@ -77,6 +94,11 @@ async def lifespan(app: FastAPI):
     await app.state.pool.close()
 
 app.router.lifespan_context = lifespan
+
+# Gerador de senha aleatória
+def generate_random_password(length: int = 10) -> str:
+    chars = string.ascii_letters + string.digits
+    return ''.join(secrets.choice(chars) for _ in range(length))
 
 
 @app.post("/register")
@@ -226,3 +248,51 @@ async def detect_objects(file: UploadFile = File(...)):
             })
 
     return JSONResponse(content={"detections": detections})
+
+@app.post("/reset-password-simple")
+async def reset_password_simple(request: EmailRequest):
+    email = request.email
+    try:
+        query = "SELECT id FROM app.users WHERE email = $1;"
+        async with app.state.pool.acquire() as conn:
+            user = await conn.fetchrow(query, email)
+
+        if not user:
+            raise HTTPException(status_code=404, detail="Usuário não encontrado.")
+
+        new_password = generate_random_password()
+        password_bytes = new_password.encode("utf-8")[:72]
+        hashed_pw = bcrypt.hashpw(password_bytes, bcrypt.gensalt()).decode("utf-8")
+
+        update_query = "UPDATE app.users SET password_hash = $1 WHERE email = $2;"
+        async with app.state.pool.acquire() as conn:
+            await conn.execute(update_query, hashed_pw, email)
+
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = "Nova senha de acesso"
+        msg["From"] = EMAIL_SENDER
+        msg["To"] = email
+        html_content = f"""
+        <html>
+            <body>
+                <p>Olá!<br><br>
+                Sua nova senha é: <b>{new_password}</b><br><br>
+                Recomendamos alterá-la após o primeiro login.
+                </p>
+            </body>
+        </html>
+        """
+        msg.attach(MIMEText(html_content, "html"))
+
+        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+            server.starttls()
+            server.login(EMAIL_SENDER, EMAIL_PASSWORD)
+            server.sendmail(EMAIL_SENDER, email, msg.as_string())
+
+        return {"message": "Nova senha enviada para o e-mail com sucesso."}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print("Erro ao redefinir senha:", e)
+        raise HTTPException(status_code=500, detail="Erro ao redefinir senha.")
