@@ -1,4 +1,4 @@
-export const API_URL = "http://192.168.0.36:8000";
+export const API_URL = "http://192.168.0.52:8000";
 
 export async function registerUser(name, email, password) {
   try {
@@ -88,5 +88,28 @@ export async function detectObjects(uri) {
   } catch (error) {
     console.error("Erro ao detectar objetos:", error);
     return { detections: [] };
+  }
+}
+
+export async function resetPasswordSimple(email) {
+  try {
+    const response = await fetch(`${API_URL}/reset-password-simple`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email }), 
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.detail || "Erro ao redefinir senha");
+    }
+
+    return data;
+  } catch (err) {
+    console.error("Erro na API (resetPasswordSimple):", err.message);
+    throw err;
   }
 }
