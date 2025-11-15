@@ -185,7 +185,7 @@ async def main():
 #     return JSONResponse(content={"detections": detections})
 
 
-# --- initializar pyopencl ---
+# --- inicializar pyopencl - detecta a primeira CPU identificada e cria contexto - se não roda error ---
 def get_opencl_context():
     for platform in cl.get_platforms():
         if "NVIDIA" in platform.name or "Intel" in platform.name:
@@ -196,29 +196,48 @@ def get_opencl_context():
     raise RuntimeError("No OpenCL GPU device found.")
 
 ctx = get_opencl_context()
+# Cria fila de comandos para o contexto kernels e operações na GPU
 queue = cl.CommandQueue(ctx)
 
-# --- kernel para copiar imagem ---
+"""
+ kernel para copiar imagem
+ __global -> variável global
+ const -> Kernel não modifica a origem
+ uchar -> caractere sem sinal em C/OpenCL equivalente a um inteiro de 8 bits sem sinal
+ dst -> destino da foto
+ get_global_id(0) -> pega o ID do trabalho em andamento
+"""
 COPY_KERNEL = """
 __kernel void copy_image(__global const uchar *src, __global uchar *dst) {
     int i = get_global_id(0);
     dst[i] = src[i];
 }
 """
+
+# Compila o código para GPU
 program = cl.Program(ctx, COPY_KERNEL).build()
 
 def copy_with_opencl(image: np.ndarray) -> np.ndarray:
     """Copia imagem com GPU."""
+    # diminui dimensão com o flatten
     img_flat = image.flatten()
     output = np.empty_like(img_flat)
     mf = cl.mem_flags
-
+# coloca flag de somente ler - aloca buffer da GPU
     src_buf = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=img_flat)
+    # aloca memória vazia para ser escrita
     dst_buf = cl.Buffer(ctx, mf.WRITE_ONLY, output.nbytes)
 
-    program.copy_image(queue, img_flat.shape, None, src_buf, dst_buf)
-    cl.enqueue_copy(queue, output, dst_buf)
 
+    # prepara a instrução de copiar imagem
+    program.copy_image(queue, img_flat.shape, None, src_buf, dst_buf)
+    """ Roda N threads de GPU:
+        thread 0 → copia src[0]
+        thread 1 → copia src[1]
+        ...
+        thread N-1 → copia src[N-1]"""
+    cl.enqueue_copy(queue, output, dst_buf)
+# retorna imagem 2D
     return output.reshape(image.shape)
 
 @app.post("/detect/")
