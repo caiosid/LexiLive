@@ -19,10 +19,14 @@ import Feather from "@expo/vector-icons/Feather";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import * as Speech from "expo-speech";
 import { detectObjects } from "../../api/api";
+import { LABEL_TRANSLATIONS } from "./translates";
+import { useRoute } from "@react-navigation/native";
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
 export default function CameraScreen() {
+  const route = useRoute();
+  const { language } = route.params || { language: "en-US" }; // padrão de retorno
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef(null);
 
@@ -38,7 +42,7 @@ export default function CameraScreen() {
 
   const speakLabel = (text) => {
     try {
-      Speech.speak(text, { language: "pt-BR", rate: 1.0, pitch: 1.0 });
+      Speech.speak(text, { language: language, rate: 1.0, pitch: 1.0 });
     } catch (e) {
       console.warn("Erro ao falar:", e);
     }
@@ -125,11 +129,27 @@ export default function CameraScreen() {
       // envia para backend
       try {
         const res = await detectObjects(photo.uri);
-        setDetections(res?.detections || []);
+        const translated = res?.detections.map((det) => {
+          const originalClass = det.class;
+          const translatedLabel =
+            LABEL_TRANSLATIONS[originalClass]?.[language] || originalClass;
+
+          console.log("🔧 Translation Debug:", {
+            originalClass,
+            language,
+            translatedLabel,
+          });
+
+          return {
+            ...det,
+            class: translatedLabel, // substitui class pelo traduzido
+          };
+        });
+        setDetections(translated);
       } catch (err) {
         console.error("Erro detectObjects:", err);
         setDetections([]);
-        
+
       }
     } catch (err) {
       console.error("Erro ao tirar foto:", err);

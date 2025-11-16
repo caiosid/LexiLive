@@ -16,7 +16,7 @@ export default function ChooseLanguage() {
 
       <View>
         <TouchableOpacity style={styles.languageButton}
-        onPress={() => handleLanguageSelect("en")}>
+        onPress={() => handleLanguageSelect("en-US")}>
           <Image
             source={require("../../assets/united-state.png")}
             style={styles.flagImage}
@@ -25,7 +25,7 @@ export default function ChooseLanguage() {
           
         </TouchableOpacity>
         <TouchableOpacity style={styles.languageButton}
-        onPress={() => handleLanguageSelect("fr")}>
+        onPress={() => handleLanguageSelect("fr-FR")}>
           <Image
             source={require("../../assets/france.png")}
             style={styles.flagImage}
@@ -33,7 +33,7 @@ export default function ChooseLanguage() {
           <Text style={styles.languageText}>Francês</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.languageButton}
-        onPress={() => handleLanguageSelect("it")}>
+        onPress={() => handleLanguageSelect("it-IT")}>
           <Image
             source={require("../../assets/italy.png")}
             style={styles.flagImage}
@@ -41,7 +41,7 @@ export default function ChooseLanguage() {
           <Text style={styles.languageText}>Italiano</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.languageButton}
-        onPress={() => handleLanguageSelect("de")}>
+        onPress={() => handleLanguageSelect("de-DE")}>
           <Image
             source={require("../../assets/germany.png")}
             style={styles.flagImage}
@@ -49,7 +49,7 @@ export default function ChooseLanguage() {
           <Text style={styles.languageText}>Alemão</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.languageButton}
-        onPress={() => handleLanguageSelect("es")}>
+        onPress={() => handleLanguageSelect("es-ES")}>
           <Image
             source={require("../../assets/spain.png")}
             style={styles.flagImage}
