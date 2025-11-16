@@ -1,4 +1,4 @@
-export const API_URL = "http://192.168.0.52:8000";
+export const API_URL = "http://192.168.0.62:8000";
 
 export async function registerUser(name, email, password) {
   try {
@@ -69,7 +69,7 @@ export async function detectObjects(uri) {
     }
 
     // Faz a requisição
-    const response = await fetch(`${API_URL}/detect`, {
+    const response = await fetch(`${API_URL}/detect/`, {
       method: "POST",
       body: formData,
       headers: {
