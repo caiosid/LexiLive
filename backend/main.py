@@ -161,84 +161,84 @@ async def main():
     return {"status": "running"}
 
 # Uso do detect sem openCL(pyopenCL)
-# @app.post("/detect/")
-# async def detect_objects(file: UploadFile = File(...)):
+@app.post("/detect/")
+async def detect_objects(file: UploadFile = File(...)):
     
-#     print("Arquivo recebido:", file.filename, file.content_type)
-#     contents = await file.read()
-#     image = Image.open(io.BytesIO(contents)).convert("RGB")
-#     results = model(image)
+    print("Arquivo recebido:", file.filename, file.content_type)
+    contents = await file.read()
+    image = Image.open(io.BytesIO(contents)).convert("RGB")
+    results = model(image)
 
-#     detections = []
-#     for r in results:
-#         boxes = r.boxes
-#         for box in boxes:
-#             cls_id = int(box.cls[0])
-#             conf = float(box.conf[0])
-#             x1, y1, x2, y2 = map(float, box.xyxy[0])
-#             detections.append({
-#                 "class": model.names[cls_id],
-#                 "confidence": conf,
-#                 "bbox": [x1, y1, x2, y2]
-#             })
+    detections = []
+    for r in results:
+        boxes = r.boxes
+        for box in boxes:
+            cls_id = int(box.cls[0])
+            conf = float(box.conf[0])
+            x1, y1, x2, y2 = map(float, box.xyxy[0])
+            detections.append({
+                "class": model.names[cls_id],
+                "confidence": conf,
+                "bbox": [x1, y1, x2, y2]
+            })
 
-#     return JSONResponse(content={"detections": detections})
+    return JSONResponse(content={"detections": detections})
 
 
 # --- inicializar pyopencl - detecta a primeira CPU identificada e cria contexto - se não roda error ---
-def get_opencl_context():
-    for platform in cl.get_platforms():
-        if "NVIDIA" in platform.name or "Intel" in platform.name:
-            devices = platform.get_devices(device_type=cl.device_type.GPU)
-            if devices:
-                print(f"Using OpenCL on: {platform.name} - {devices[0].name}")
-                return cl.Context(devices=devices)
-    raise RuntimeError("No OpenCL GPU device found.")
+# def get_opencl_context():
+#     for platform in cl.get_platforms():
+#         if "NVIDIA" in platform.name or "Intel" in platform.name:
+#             devices = platform.get_devices(device_type=cl.device_type.GPU)
+#             if devices:
+#                 print(f"Using OpenCL on: {platform.name} - {devices[0].name}")
+#                 return cl.Context(devices=devices)
+#     raise RuntimeError("No OpenCL GPU device found.")
 
-ctx = get_opencl_context()
-# Cria fila de comandos para o contexto kernels e operações na GPU
-queue = cl.CommandQueue(ctx)
+# ctx = get_opencl_context()
+# # Cria fila de comandos para o contexto kernels e operações na GPU
+# queue = cl.CommandQueue(ctx)
 
-"""
- kernel para copiar imagem
- __global -> variável global
- const -> Kernel não modifica a origem
- uchar -> caractere sem sinal em C/OpenCL equivalente a um inteiro de 8 bits sem sinal
- dst -> destino da foto
- get_global_id(0) -> pega o ID do trabalho em andamento
-"""
-COPY_KERNEL = """
-__kernel void copy_image(__global const uchar *src, __global uchar *dst) {
-    int i = get_global_id(0);
-    dst[i] = src[i];
-}
-"""
+# """
+#  kernel para copiar imagem
+#  __global -> variável global
+#  const -> Kernel não modifica a origem
+#  uchar -> caractere sem sinal em C/OpenCL equivalente a um inteiro de 8 bits sem sinal
+#  dst -> destino da foto
+#  get_global_id(0) -> pega o ID do trabalho em andamento
+# """
+# COPY_KERNEL = """
+# __kernel void copy_image(__global const uchar *src, __global uchar *dst) {
+#     int i = get_global_id(0);
+#     dst[i] = src[i];
+# }
+# """
 
-# Compila o código para GPU
-program = cl.Program(ctx, COPY_KERNEL).build()
+# # Compila o código para GPU
+# program = cl.Program(ctx, COPY_KERNEL).build()
 
-def copy_with_opencl(image: np.ndarray) -> np.ndarray:
-    """Copia imagem com GPU."""
-    # diminui dimensão com o flatten
-    img_flat = image.flatten()
-    output = np.empty_like(img_flat)
-    mf = cl.mem_flags
-# coloca flag de somente ler - aloca buffer da GPU
-    src_buf = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=img_flat)
-    # aloca memória vazia para ser escrita
-    dst_buf = cl.Buffer(ctx, mf.WRITE_ONLY, output.nbytes)
+# def copy_with_opencl(image: np.ndarray) -> np.ndarray:
+#     """Copia imagem com GPU."""
+#     # diminui dimensão com o flatten
+#     img_flat = image.flatten()
+#     output = np.empty_like(img_flat)
+#     mf = cl.mem_flags
+# # coloca flag de somente ler - aloca buffer da GPU
+#     src_buf = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=img_flat)
+#     # aloca memória vazia para ser escrita
+#     dst_buf = cl.Buffer(ctx, mf.WRITE_ONLY, output.nbytes)
 
 
-    # prepara a instrução de copiar imagem
-    program.copy_image(queue, img_flat.shape, None, src_buf, dst_buf)
-    """ Roda N threads de GPU:
-        thread 0 → copia src[0]
-        thread 1 → copia src[1]
-        ...
-        thread N-1 → copia src[N-1]"""
-    cl.enqueue_copy(queue, output, dst_buf)
-# retorna imagem 2D
-    return output.reshape(image.shape)
+#     # prepara a instrução de copiar imagem
+#     program.copy_image(queue, img_flat.shape, None, src_buf, dst_buf)
+#     """ Roda N threads de GPU:
+#         thread 0 → copia src[0]
+#         thread 1 → copia src[1]
+#         ...
+#         thread N-1 → copia src[N-1]"""
+#     cl.enqueue_copy(queue, output, dst_buf)
+# # retorna imagem 2D
+#     return output.reshape(image.shape)
 
 @app.post("/detect/")
 async def detect_objects(file: UploadFile = File(...)):
