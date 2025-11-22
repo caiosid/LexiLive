@@ -1,20 +1,23 @@
-# Use official Python image
 FROM python:3.12-slim
 
-# Set working directory
+# Install system dependencies for OpenCV
+RUN apt-get update && apt-get install -y \
+    libgl1 \
+    libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set workdir
 WORKDIR /app
 
-# Copy requirements first (for caching)
+# Copy dependencies
 COPY requirements.txt .
 
-# Install dependencies
+# Install Python packages
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the project
+# Copy project files
 COPY . .
 
-# Expose the port your app runs on
 EXPOSE 8000
 
-# Run the app with uvicorn
-CMD ["uvicorn", "main:app", "--reload", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
