@@ -13,8 +13,8 @@ RUN npm install -g expo-cli && npm install
 # Copy the rest of the code.
 COPY . .
 
-# It displays the doors used by the Expo.
-EXPOSE 19000 19001 19002
+# Expose Expo ports
+EXPOSE 19000 19001 19002 8081
 
-# Defines the default command when starting the container.
-CMD ["npm", "start"]
+# Start Expo in host mode
+CMD ["npx", "expo", "start", "--host", "0.0.0.0"]
