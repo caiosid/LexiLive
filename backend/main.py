@@ -84,7 +84,7 @@ class EmailRequest(BaseModel):
 
 
 async def get_pool():
-    return await asyncpg.create_pool(DATABASE_URL, ssl="require")
+    return await asyncpg.create_pool(DATABASE_URL)
 
 
 @asynccontextmanager
