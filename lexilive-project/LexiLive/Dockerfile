@@ -23,5 +23,4 @@ USER appuser
 # Expose Expo ports
 EXPOSE 19000 19001 19002 8081
 
-# Start Expo in LAN mode
 CMD ["npx", "expo", "start", "--host", "lan"]
